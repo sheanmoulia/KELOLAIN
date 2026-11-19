@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Concerns\HasTeams;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -25,6 +25,8 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
+ * @property bool $is_guest
+ * @property bool $email_reminders
  * @property int|null $current_team_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -33,12 +35,17 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'current_team_id'])]
+#[Fillable(['name', 'email', 'password', 'current_team_id', 'is_guest', 'email_reminders'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasTeams, Notifiable, PasskeyAuthenticatable;
+
+    protected $attributes = [
+        'is_guest' => false,
+        'email_reminders' => true,
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -50,23 +57,25 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_guest' => 'boolean',
+            'email_reminders' => 'boolean',
         ];
     }
 
-    // Relasi User dengan Ingredients
-    public function ingredients(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<Ingredient, $this> */
+    public function ingredients(): HasMany
     {
         return $this->hasMany(Ingredient::class);
     }
 
-    // Relasi User dengan Waste Records
-    public function wasteRecords(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<WasteRecord, $this> */
+    public function wasteRecords(): HasMany
     {
         return $this->hasMany(WasteRecord::class);
     }
 
-    // Relasi User dengan Reminders
-    public function reminders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<Reminder, $this> */
+    public function reminders(): HasMany
     {
         return $this->hasMany(Reminder::class);
     }

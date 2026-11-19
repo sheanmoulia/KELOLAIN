@@ -9,7 +9,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, WorkspaceController $workspace): Response
     {
         $email = strtolower($request->user()->email);
 
@@ -32,6 +32,7 @@ class DashboardController extends Controller
             ]);
 
         return Inertia::render('dashboard', [
+            ...$workspace->props($request->user(), 'Dashboard'),
             'pendingInvitations' => $pendingInvitations,
         ]);
     }

@@ -30,7 +30,15 @@ void createInertiaApp({
 
     layout: (name) => {
         switch (true) {
-            case name === 'welcome':
+            case [
+                'welcome',
+                'dashboard',
+                'Workspace',
+                'auth/login',
+                'auth/register',
+                'auth/forgot-password',
+                'auth/reset-password',
+            ].includes(name):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

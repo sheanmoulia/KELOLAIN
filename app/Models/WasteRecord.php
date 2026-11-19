@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/** @property CarbonImmutable $waste_date */
 class WasteRecord extends Model
 {
     protected $fillable = [
         'user_id',
         'ingredient_id',
         'ingredient_name',
+        'category_name',
         'quantity',
         'unit',
         'loss_amount',
@@ -24,17 +27,17 @@ class WasteRecord extends Model
         return [
             'quantity' => 'decimal:2',
             'loss_amount' => 'decimal:2',
-            'waste_date' => 'date',
+            'waste_date' => 'immutable_date',
         ];
     }
 
-    // Catatan waste dimiliki oleh satu User
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Catatan waste dapat terhubung dengan satu Ingredient
+    /** @return BelongsTo<Ingredient, $this> */
     public function ingredient(): BelongsTo
     {
         return $this->belongsTo(Ingredient::class);

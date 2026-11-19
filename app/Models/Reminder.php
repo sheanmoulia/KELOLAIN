@@ -11,6 +11,7 @@ class Reminder extends Model
         'user_id',
         'ingredient_id',
         'reminder_type',
+        'expiry_date',
         'scheduled_at',
         'sent_at',
         'status',
@@ -20,17 +21,18 @@ class Reminder extends Model
     {
         return [
             'scheduled_at' => 'datetime',
+            'expiry_date' => 'immutable_date',
             'sent_at' => 'datetime',
         ];
     }
 
-    // Reminder dimiliki oleh satu User
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Reminder terhubung dengan satu Ingredient
+    /** @return BelongsTo<Ingredient, $this> */
     public function ingredient(): BelongsTo
     {
         return $this->belongsTo(Ingredient::class);

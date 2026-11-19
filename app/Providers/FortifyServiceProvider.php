@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\PasskeyLoginResponse;
@@ -43,6 +44,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureActions(): void
     {
+        Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
     }
 
@@ -51,20 +53,23 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn(Request $request) => Inertia::render('auth/login', [
+        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'status' => $request->session()->get('status'),
             'teamInvitation' => $this->teamInvitation($request),
         ]));
 
-        Fortify::registerView(fn() => Inertia::render('auth/register'));
-
-        Fortify::resetPasswordView(fn(Request $request) => Inertia::render('auth/reset-password', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
+        Fortify::registerView(fn () => Inertia::render('auth/register', [
+            'passwordMin' => app()->isProduction() ? 12 : 8,
         ]));
 
-        Fortify::requestPasswordResetLinkView(fn(Request $request) => Inertia::render('auth/forgot-password', [
+        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
+            'email' => $request->email,
+            'token' => $request->route('token'),
+            'passwordMin' => app()->isProduction() ? 12 : 8,
+        ]));
+
+        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
             'status' => $request->session()->get('status'),
         ]));
 
@@ -77,7 +82,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
         });
@@ -86,7 +91,7 @@ class FortifyServiceProvider extends ServiceProvider
             $credentialId = $request->input('credential.id');
 
             return Limit::perMinute(10)->by(
-                ($credentialId ?: $request->session()->getId()) . '|' . $request->ip(),
+                ($credentialId ?: $request->session()->getId()).'|'.$request->ip(),
             );
         });
     }
@@ -100,7 +105,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
         $invitationCode = $request->query('invitation');
 
-        if (!is_string($invitationCode)) {
+        if (! is_string($invitationCode)) {
             return null;
         }
 
@@ -108,12 +113,12 @@ class FortifyServiceProvider extends ServiceProvider
             ->with('team')
             ->where('code', $invitationCode)
             ->whereNull('accepted_at')
-            ->where(fn($query) => $query
+            ->where(fn ($query) => $query
                 ->whereNull('expires_at')
                 ->orWhere('expires_at', '>=', now()))
             ->first();
 
-        if (!$invitation) {
+        if (! $invitation) {
             return null;
         }
 

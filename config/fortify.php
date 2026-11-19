@@ -161,7 +161,8 @@ return [
 
     'features' => [
         Features::registration(),
-        Features::resetPasswords(),
+        ...(env('APP_ENV', 'production') !== 'production' || env('EMAIL_ENABLED', false)
+            ? [Features::resetPasswords()] : []),
         Features::passkeys([
             'confirmPassword' => false,
         ]),

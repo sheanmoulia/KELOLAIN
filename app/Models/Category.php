@@ -21,7 +21,7 @@ class Category extends Model
         ];
     }
 
-    // Satu Category dapat memiliki banyak Ingredients
+    /** @return HasMany<Ingredient, $this> */
     public function ingredients(): HasMany
     {
         return $this->hasMany(Ingredient::class);
